@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Tweet } from '../typings'
 import TimeAgo from 'react-timeago'
 import {
@@ -7,12 +7,26 @@ import {
     SwitchHorizontalIcon,
     UploadIcon,
 } from '@heroicons/react/outline'
+import { fetchComments } from '../utils/fetchComments'
 
 interface Props {
     tweet: Tweet
 }
 
 function Tweet({ tweet }: Props) {
+    const [comments, setComments] = useState<Comment[]>([])
+
+    const refreshComments = async () => {
+        const comments: Comment[] = await fetchComments(tweet._id)
+        setComments(comments);
+    }
+
+    useEffect(() => {
+        refreshComments()
+    }, [])
+
+    console.log(comments)
+
     return (
         <div className='flex flex-col space-x-3 border-y border-gray-100 p-5'>
             <div className='flex space-x-3'>
@@ -31,9 +45,9 @@ function Tweet({ tweet }: Props) {
 
                     {tweet.image && (
                         <img
-                         src={tweet.image}
-                         alt=""
-                         className='m-5 ml-0 mb-1 max-h-60 rounded-lg object-cover shadow-sm'
+                            src={tweet.image}
+                            alt=""
+                            className='m-5 ml-0 mb-1 max-h-60 rounded-lg object-cover shadow-sm'
                         />
                     )}
                 </div>
@@ -42,7 +56,7 @@ function Tweet({ tweet }: Props) {
             <div className='mt-5 flex justify-between'>
                 <div className='flex cursor-pointer items-center space-x-3 text-gray-400'>
                     <ChatAlt2Icon className='h-5 w-5' />
-                    <p>5</p>
+                    <p>{comments.length}</p>
                 </div>
 
                 <div className='flex cursor-pointer items-center space-x-3 text-gray-400'>
@@ -57,6 +71,32 @@ function Tweet({ tweet }: Props) {
                     <UploadIcon className='h-5 w-5' />
                 </div>
             </div>
+
+            {/* {Comment Box logic} */}
+
+            {comments?.length > 0 && (
+                <div className='my-2 mt-5 max-h-44 space-y-5 overflow-scroll border-t border-gray-100 p-5'>
+                    {comments.map((comment) => (
+                        <div key={comment._id} className="relative flex space-x-2">
+                            <hr className='absolute left-5 top-10 h-8 border-x border-twitter/38' />
+                            <img src={comment.profileImg} className="mt-2 h-7 w-7 rounded-full object-cover" alt="" />
+                            <div>
+                                <div className='flex items-center space-x-1'>
+                                    <p className='mr-1 font-bold'>{comment.username}
+                                    </p>
+                                    <p className='hidden text-sm text-gray-500 lg:inline'>@{comment.username.replace(/\s+/g, '').tolowerCase()} </p>
+                                    <TimeAgo className='text-sm text-gray-500'
+                                        date={comment._createAt}
+                                    />
+                                </div>
+
+                            </div>
+                            <p>{comment.comment}</p>
+                        </div>
+
+                    ))}
+                </div>
+            )}
         </div>
     )
 }
